@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/caarlos0/env"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,15 +16,15 @@ import (
 )
 
 type option struct {
-	Project      string           `description:"specify the project name" long:"project"`
-	Dataset      string           `description:"specify the dataset name" long:"dataset"`
-	Host         string           `description:"specify the host" long:"host" default:"0.0.0.0"`
-	HTTPPort     uint16           `description:"specify the http port number. this port used by bigquery api" long:"port" default:"9050"`
-	GRPCPort     uint16           `description:"specify the grpc port number. this port used by bigquery storage api" long:"grpc-port" default:"9060"`
-	LogLevel     server.LogLevel  `description:"specify the log level (debug/info/warn/error)" long:"log-level" default:"error"`
-	LogFormat    server.LogFormat `description:"specify the log format (console/json)" long:"log-format" default:"console"`
-	Database     string           `description:"specify the database file if required. if not specified, it will be on memory" long:"database"`
-	DataFromYAML string           `description:"specify the path to the YAML file that contains the initial data" long:"data-from-yaml"`
+	Project      string           `description:"specify the project name" long:"project" env:"PROJECT"`
+	Dataset      string           `description:"specify the dataset name" long:"dataset" env:"DATASET"`
+	Host         string           `description:"specify the host" long:"host" default:"0.0.0.0" env:"HOST"`
+	HTTPPort     uint16           `description:"specify the http port number. this port used by bigquery api" long:"port" default:"9050" env:"PORT"`
+	GRPCPort     uint16           `description:"specify the grpc port number. this port used by bigquery storage api" long:"grpc-port" default:"9060" env:"GRPC_PORT"`
+	LogLevel     server.LogLevel  `description:"specify the log level (debug/info/warn/error)" long:"log-level" default:"error" env:"LOG_LEVEL"`
+	LogFormat    server.LogFormat `description:"specify the log format (console/json)" long:"log-format" default:"console" env:"LOG_FORMAT"`
+	Database     string           `description:"specify the database file if required. if not specified, it will be on memory" long:"database" env:"DATABASE"`
+	DataFromYAML string           `description:"specify the path to the YAML file that contains the initial data" long:"data-from-yaml" env:"DATA_FROM_YAML"`
 	Version      bool             `description:"print version" long:"version" short:"v"`
 }
 
@@ -44,7 +45,12 @@ func main() {
 }
 
 func run() exitCode {
-	args, opt, err := parseOpt()
+	opt, err := parseEnv()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "[bigquery-emulator] error parsing environment variables: %v", err)
+		return exitError
+	}
+	args, err := parseOpt(&opt)
 	if err != nil {
 		flagsErr, ok := err.(*flags.Error)
 		if !ok {
@@ -63,11 +69,16 @@ func run() exitCode {
 	return exitOK
 }
 
-func parseOpt() ([]string, option, error) {
+func parseEnv() (option, error) {
 	var opt option
-	parser := flags.NewParser(&opt, flags.Default)
+	err := env.Parse(&opt)
+	return opt, err
+}
+
+func parseOpt(opt *option) ([]string, error) {
+	parser := flags.NewParser(opt, flags.Default)
 	args, err := parser.Parse()
-	return args, opt, err
+	return args, err
 }
 
 func runServer(args []string, opt option) error {

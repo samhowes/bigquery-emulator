@@ -37,6 +37,7 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/apache/arrow/go/v14 v14.0.2 // indirect
 	github.com/apache/thrift v0.17.0 // indirect
+	github.com/caarlos0/env v3.5.0+incompatible // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect
 	github.com/dop251/goja v0.0.0-20221118162653-d4bf6fde1b86 // indirect
